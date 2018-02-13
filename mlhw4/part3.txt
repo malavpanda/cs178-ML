@@ -1,0 +1,64 @@
+m,n = Xt.shape
+nUse = 1000;
+nBag = 25; 
+classifiers = [ None ] * nBag 
+
+for i in range(nBag):
+    ind = np.floor( m * np.random.rand(nUse) ).astype(int) 
+    Xi, Yi = Xt[ind,:] , Yt[ind] 
+    classifiers[i] = ml.dtree.treeClassify(Xi, Yi, nFeatures = 5) 
+	
+#on validation data
+mTest = Xv.shape[0];
+nBag = np.arange(1,26);
+nBag_err = [None] * 25;
+mini = 1;
+for ii in range(0,25):
+    predict = np.zeros( (mTest, nBag[ii]) ) 
+    for i in range(0,nBag[ii]):
+        predict[:,i] = classifiers[i].predict(Xv); 
+    predict = np.mean(predict, axis=1) > 0.5;
+    err = 0
+    for j in range(0,mTest):
+        err += 1 if (predict[j] != Yv[j]) else 0 
+    nBag_err[ii] = err/(mTest);
+    
+plt.figure()
+plt.semilogx(nBag, nBag_err, label = "Validation Error", color = 'g')
+
+#on training data
+mTest = Xt.shape[0];
+nBag = np.arange(1,26);
+nBag_err = [None] * 25;
+for ii in range(0,25):
+    predict = np.zeros( (mTest, nBag[ii]) ) 
+    for i in range(0,nBag[ii]):
+        predict[:,i] = classifiers[i].predict(Xt); 
+    predict = np.mean(predict, axis=1);
+    for k in range(0,mTest):
+        if(predict[k] >= 0.5):
+            predict[k] = 1;
+        else:
+            predict[k] = 0;
+    err = 0
+    for j in range(0,mTest):
+        err += 1 if (predict[j] != Yt[j]) else 0 
+    nBag_err[ii] = err/(mTest);
+
+plt.semilogx(nBag, nBag_err, label = "Training Error", color = 'r');
+plt.title("Learners vs Error");
+plt.legend(loc = "upper right");
+plt.show()
+
+#on test data
+#preds = np.zeros( (Xte.shape[0], nBag) )
+#for i in range(0,nBag):
+    #pred = classifiers[i].predictSoft(Xte); # Apply each classifier
+    #pred = pred[:,1];
+    #preds[:,i] = pred ;
+
+#means = np.mean(preds,axis=1)
+
+#np.savetxt('Yhat_dtree.txt',
+#np.vstack( (np.arange(len(means)) , means) ).T,
+#'%d, %.2f',header='ID,Prob1',comments='',delimiter=',');
